@@ -1,0 +1,713 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>機械加工 寸法早見</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#0b2540;
+    --panel:#0f2f52;
+    --panel-2:#123a5c;
+    --line:#2a5578;
+    --line-soft:#1a3f60;
+    --text:#eaf4fb;
+    --text-dim:#8fb8d6;
+    --accent:#ffb454;
+    --accent-dim:#c98a3a;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    background:var(--bg);
+    color:var(--text);
+    font-family:'Space Grotesk', sans-serif;
+    padding:28px 20px 60px;
+  }
+  .wrap{ max-width:980px; margin:0 auto; }
+  .eyebrow{
+    font-family:'JetBrains Mono', monospace;
+    font-size:11px;
+    letter-spacing:0.16em;
+    color:var(--text-dim);
+    text-transform:uppercase;
+    margin:0 0 6px;
+  }
+  h1{ font-size:22px; font-weight:700; margin:0 0 16px; letter-spacing:0.01em; }
+
+  /* Category tabs */
+  .cat-tabs{
+    display:flex;
+    gap:2px;
+    margin-bottom:26px;
+    border:1px solid var(--line-soft);
+    border-radius:4px;
+    overflow:hidden;
+    width:fit-content;
+  }
+  .cat-tab{
+    font-family:'JetBrains Mono', monospace;
+    font-size:13px;
+    font-weight:500;
+    letter-spacing:0.02em;
+    padding:12px 20px;
+    background:var(--panel);
+    color:var(--text-dim);
+    border:none;
+    cursor:pointer;
+    transition:background 0.15s, color 0.15s;
+  }
+  .cat-tab.active{
+    background:var(--accent);
+    color:#1a1305;
+    font-weight:700;
+  }
+  .cat-tab:not(.active):hover{ background:var(--panel-2); color:var(--text); }
+
+  .panel-view{ display:none; }
+  .panel-view.active{ display:block; }
+
+  .sub{ font-size:13px; color:var(--text-dim); margin:0 0 20px; line-height:1.6; }
+  .sub b{ color:var(--text); font-weight:500; }
+
+  .control-row{ display:flex; align-items:center; gap:14px; margin-bottom:24px; flex-wrap:wrap; }
+  .control-row label{ font-family:'JetBrains Mono', monospace; font-size:12px; color:var(--text-dim); letter-spacing:0.06em; }
+
+  select{
+    appearance:none;
+    background:var(--panel-2);
+    border:1px solid var(--line);
+    color:var(--accent);
+    font-family:'JetBrains Mono', monospace;
+    font-size:20px;
+    font-weight:700;
+    padding:10px 40px 10px 16px;
+    border-radius:2px;
+    cursor:pointer;
+    background-image: linear-gradient(45deg, transparent 50%, var(--text-dim) 50%), linear-gradient(135deg, var(--text-dim) 50%, transparent 50%);
+    background-position: calc(100% - 20px) center, calc(100% - 15px) center;
+    background-size: 5px 5px, 5px 5px;
+    background-repeat: no-repeat;
+  }
+  select:focus{ outline:2px solid var(--accent); outline-offset:2px; }
+
+  .toggle-group{ display:flex; border:1px solid var(--line); border-radius:2px; overflow:hidden; }
+  .toggle-btn{
+    font-family:'JetBrains Mono', monospace;
+    font-size:14px;
+    font-weight:600;
+    padding:9px 18px;
+    background:var(--panel-2);
+    color:var(--text-dim);
+    border:none;
+    cursor:pointer;
+  }
+  .toggle-btn + .toggle-btn{ border-left:1px solid var(--line); }
+  .toggle-btn.active{ background:var(--accent); color:#1a1305; }
+
+  .std-note{ font-family:'JetBrains Mono', monospace; font-size:11px; color:var(--text-dim); }
+
+  .layout{ display:grid; grid-template-columns:1.2fr 1fr; gap:24px; }
+  @media (max-width:760px){ .layout{ grid-template-columns:1fr; } }
+
+  .diagram-panel{ background:var(--panel); border:1px solid var(--line-soft); border-radius:4px; padding:20px 12px 12px; position:relative; }
+  .diagram-panel .tag{ position:absolute; top:12px; left:16px; font-family:'JetBrains Mono', monospace; font-size:10px; color:var(--text-dim); letter-spacing:0.1em; }
+  svg{ width:100%; height:auto; display:block; }
+  .dim-line{ stroke:var(--text-dim); stroke-width:1; }
+  .dim-arrow{ fill:var(--text-dim); }
+  .dim-text{ font-family:'JetBrains Mono', monospace; font-size:13px; fill:var(--text); }
+  .dim-text.hi{ fill:var(--accent); font-weight:700; }
+  .hatch{ fill:url(#hatchPattern); }
+  .steel-edge{ stroke:#5a8bb0; stroke-width:1.2; fill:none; }
+
+  .table-panel{ background:var(--panel); border:1px solid var(--line-soft); border-radius:4px; padding:18px 18px 8px; }
+  .table-panel h2{ font-size:12px; font-weight:600; letter-spacing:0.08em; color:var(--text-dim); text-transform:uppercase; margin:0 0 14px; }
+  .kv{ display:flex; justify-content:space-between; align-items:baseline; padding:10px 0; border-bottom:1px solid var(--line-soft); }
+  .kv:last-child{ border-bottom:none; }
+  .kv .k{ font-size:13px; color:var(--text-dim); }
+  .kv .k .sym{ font-family:'JetBrains Mono', monospace; color:var(--text); font-weight:500; }
+  .kv .v{ font-family:'JetBrains Mono', monospace; font-size:18px; font-weight:700; color:var(--text); }
+  .kv.primary .v{ color:var(--accent); font-size:20px; }
+  .kv .unit{ font-size:11px; color:var(--text-dim); font-weight:400; margin-left:2px; }
+
+  .big-readout{
+    text-align:center;
+    padding:22px 0 18px;
+    border-bottom:1px solid var(--line-soft);
+    margin-bottom:6px;
+  }
+  .big-readout .label{ font-family:'JetBrains Mono', monospace; font-size:11px; color:var(--text-dim); letter-spacing:0.1em; margin-bottom:6px; }
+  .big-readout .value{ font-family:'JetBrains Mono', monospace; font-size:44px; font-weight:700; color:var(--accent); line-height:1; }
+  .big-readout .value .unit{ font-size:16px; color:var(--text-dim); margin-left:4px; }
+  .no-fine{ font-size:13px; color:var(--text-dim); text-align:center; padding:30px 10px; line-height:1.7; }
+
+  .footnote{ margin-top:20px; font-size:11px; color:var(--text-dim); line-height:1.7; border-top:1px solid var(--line-soft); padding-top:14px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <p class="eyebrow">Machining Reference / 加工現場向け参考値</p>
+  <h1>機械加工 寸法早見</h1>
+
+  <div class="cat-tabs">
+    <button class="cat-tab active" data-cat="zaguri">ザグリ寸法早見</button>
+    <button class="cat-tab" data-cat="tap">タップ下穴（並目・細目）</button>
+    <button class="cat-tab" data-cat="tolerance">はめあい公差</button>
+  </div>
+
+  <!-- ============ CATEGORY 1: ザグリ寸法早見 ============ -->
+  <div class="panel-view active" id="view-zaguri">
+    <p class="sub">ねじの呼びを選ぶと、<b>D（ざぐり径）</b>・<b>d′（取付け穴）</b>・<b>H2（ざぐり深さ）</b>をその場で表示します。</p>
+
+    <div class="control-row">
+      <label for="zaguriSize">ねじの呼び (d)</label>
+      <select id="zaguriSize"></select>
+      <span class="std-note">単位: mm</span>
+    </div>
+
+    <div class="layout">
+      <div class="diagram-panel">
+        <span class="tag">SEC. VIEW</span>
+        <svg viewBox="0 0 420 420" xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <pattern id="hatchPattern" patternUnits="userSpaceOnUse" width="8" height="8" patternTransform="rotate(45)">
+              <line x1="0" y1="0" x2="0" y2="8" stroke="#2a5578" stroke-width="1.4"/>
+            </pattern>
+            <marker id="arrowStart" markerWidth="8" markerHeight="8" refX="1" refY="3" orient="auto">
+              <path d="M7,0 L7,6 L1,3 z" class="dim-arrow"/>
+            </marker>
+            <marker id="arrowEnd" markerWidth="8" markerHeight="8" refX="7" refY="3" orient="auto">
+              <path d="M1,0 L1,6 L7,3 z" class="dim-arrow"/>
+            </marker>
+          </defs>
+
+          <g>
+            <rect x="30" y="120" width="115" height="260" class="hatch" stroke="#5a8bb0" stroke-width="1.2"/>
+            <rect x="275" y="120" width="115" height="260" class="hatch" stroke="#5a8bb0" stroke-width="1.2"/>
+            <line x1="30" y1="120" x2="145" y2="120" class="steel-edge"/>
+            <line x1="275" y1="120" x2="390" y2="120" class="steel-edge"/>
+          </g>
+
+          <g>
+            <line class="steel-edge" x1="145" y1="120" x2="145" y2="170"/>
+            <line class="steel-edge" x1="275" y1="120" x2="275" y2="170"/>
+            <line class="steel-edge" x1="145" y1="170" x2="180" y2="170"/>
+            <line class="steel-edge" x1="240" y1="170" x2="275" y2="170"/>
+          </g>
+
+          <g>
+            <line class="steel-edge" x1="180" y1="170" x2="180" y2="380"/>
+            <line class="steel-edge" x1="240" y1="170" x2="240" y2="380"/>
+          </g>
+
+          <rect x="160" y="100" width="100" height="40" fill="#3a6a92" stroke="#8fc4e8" stroke-width="1.4"/>
+          <rect x="192" y="140" width="36" height="230" fill="#3a6a92" stroke="#8fc4e8" stroke-width="1.4"/>
+
+          <line x1="160" y1="80" x2="260" y2="80" class="dim-line" marker-start="url(#arrowStart)" marker-end="url(#arrowEnd)"/>
+          <line x1="160" y1="70" x2="160" y2="100" class="dim-line" stroke-dasharray="2,2"/>
+          <line x1="260" y1="70" x2="260" y2="100" class="dim-line" stroke-dasharray="2,2"/>
+          <text id="dkLabel" x="210" y="72" text-anchor="middle" class="dim-text">dk</text>
+
+          <line x1="145" y1="55" x2="275" y2="55" class="dim-line" marker-start="url(#arrowStart)" marker-end="url(#arrowEnd)"/>
+          <line x1="145" y1="45" x2="145" y2="120" class="dim-line" stroke-dasharray="2,2"/>
+          <line x1="275" y1="45" x2="275" y2="120" class="dim-line" stroke-dasharray="2,2"/>
+          <text id="DLabel" x="210" y="47" text-anchor="middle" class="dim-text hi">D</text>
+
+          <line x1="180" y1="400" x2="240" y2="400" class="dim-line" marker-start="url(#arrowStart)" marker-end="url(#arrowEnd)"/>
+          <line x1="180" y1="380" x2="180" y2="408" class="dim-line" stroke-dasharray="2,2"/>
+          <line x1="240" y1="380" x2="240" y2="408" class="dim-line" stroke-dasharray="2,2"/>
+          <text id="dsLabel" x="210" y="415" text-anchor="middle" class="dim-text">d′</text>
+
+          <line x1="300" y1="120" x2="300" y2="170" class="dim-line" marker-start="url(#arrowStart)" marker-end="url(#arrowEnd)"/>
+          <line x1="275" y1="120" x2="305" y2="120" class="dim-line" stroke-dasharray="2,2"/>
+          <line x1="275" y1="170" x2="305" y2="170" class="dim-line" stroke-dasharray="2,2"/>
+          <text id="H2Label" x="312" y="150" text-anchor="start" class="dim-text hi">H2</text>
+
+          <line x1="330" y1="100" x2="330" y2="140" class="dim-line" marker-start="url(#arrowStart)" marker-end="url(#arrowEnd)"/>
+          <line x1="260" y1="100" x2="335" y2="100" class="dim-line" stroke-dasharray="2,2"/>
+          <line x1="275" y1="140" x2="335" y2="140" class="dim-line" stroke-dasharray="2,2"/>
+          <text id="KLabel" x="342" y="124" text-anchor="start" class="dim-text">K</text>
+        </svg>
+      </div>
+
+      <div class="table-panel">
+        <h2 id="zaguriHeading">M4 の寸法</h2>
+        <div class="kv primary">
+          <span class="k"><span class="sym">D</span> ざぐり径</span>
+          <span class="v" id="valD">-<span class="unit">mm</span></span>
+        </div>
+        <div class="kv primary">
+          <span class="k"><span class="sym">H2</span> ざぐり深さ</span>
+          <span class="v" id="valH2">-<span class="unit">mm</span></span>
+        </div>
+        <div class="kv">
+          <span class="k"><span class="sym">d′</span> 取付け穴</span>
+          <span class="v" id="valDprime">-<span class="unit">mm</span></span>
+        </div>
+        <div class="kv">
+          <span class="k"><span class="sym">ds</span> タップ径</span>
+          <span class="v" id="valDs">-<span class="unit">mm</span></span>
+        </div>
+        <div class="kv">
+          <span class="k"><span class="sym">dk</span> 頭部径</span>
+          <span class="v" id="valDk">-<span class="unit">mm</span></span>
+        </div>
+        <div class="kv">
+          <span class="k"><span class="sym">K</span> 頭部高さ</span>
+          <span class="v" id="valK">-<span class="unit">mm</span></span>
+        </div>
+
+        <div class="footnote">
+          六角穴付きボルト（キャップボルト）用のざぐり・ボルト穴参考値。d′ は JIS B 1001（2級）、ざぐり寸法は各メーカー公表値に基づく参考値です。深ざぐりに関する統一JIS規格は存在しないため、実際の加工では図面指示・使用メーカーの公差を確認してください。
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ CATEGORY 2: タップ下穴 ============ -->
+  <div class="panel-view" id="view-tap">
+    <p class="sub">ねじの呼びと<b>並目／細目</b>を選ぶと、かみあい率75%(標準)の<b>タップ下穴径</b>を表示します。</p>
+
+    <div class="control-row">
+      <label for="tapSize">ねじの呼び</label>
+      <select id="tapSize"></select>
+      <div class="toggle-group">
+        <button class="toggle-btn active" data-pitch="coarse">並目</button>
+        <button class="toggle-btn" data-pitch="fine">細目</button>
+      </div>
+      <span class="std-note">単位: mm ／ かみあい率 75%</span>
+    </div>
+
+    <div class="layout">
+      <div class="diagram-panel">
+        <span class="tag">SEC. VIEW</span>
+        <svg viewBox="0 0 420 420" xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <pattern id="hatchPattern2" patternUnits="userSpaceOnUse" width="8" height="8" patternTransform="rotate(45)">
+              <line x1="0" y1="0" x2="0" y2="8" stroke="#2a5578" stroke-width="1.4"/>
+            </pattern>
+            <marker id="arrowStart2" markerWidth="8" markerHeight="8" refX="1" refY="3" orient="auto">
+              <path d="M7,0 L7,6 L1,3 z" class="dim-arrow"/>
+            </marker>
+            <marker id="arrowEnd2" markerWidth="8" markerHeight="8" refX="7" refY="3" orient="auto">
+              <path d="M1,0 L1,6 L7,3 z" class="dim-arrow"/>
+            </marker>
+          </defs>
+
+          <!-- material block -->
+          <rect x="30" y="60" width="115" height="320" fill="url(#hatchPattern2)" stroke="#5a8bb0" stroke-width="1.2"/>
+          <rect x="275" y="60" width="115" height="320" fill="url(#hatchPattern2)" stroke="#5a8bb0" stroke-width="1.2"/>
+          <line x1="30" y1="60" x2="145" y2="60" class="steel-edge"/>
+          <line x1="275" y1="60" x2="390" y2="60" class="steel-edge"/>
+          <line x1="145" y1="60" x2="145" y2="380" class="steel-edge"/>
+          <line x1="275" y1="60" x2="275" y2="380" class="steel-edge"/>
+          <!-- hole bottom (blind hole taper) -->
+          <path d="M145,360 L210,380 L275,360" class="steel-edge"/>
+
+          <!-- thread teeth (zigzag) both walls -->
+          <g id="threadTeethLeft"></g>
+          <g id="threadTeethRight"></g>
+
+          <!-- dimension: drill diameter -->
+          <line x1="145" y1="40" x2="275" y2="40" class="dim-line" marker-start="url(#arrowStart2)" marker-end="url(#arrowEnd2)"/>
+          <line x1="145" y1="30" x2="145" y2="60" class="dim-line" stroke-dasharray="2,2"/>
+          <line x1="275" y1="30" x2="275" y2="60" class="dim-line" stroke-dasharray="2,2"/>
+          <text id="tapDrillLabel" x="210" y="32" text-anchor="middle" class="dim-text hi">φ8.5</text>
+
+          <!-- pitch callout -->
+          <line x1="300" y1="150" x2="300" y2="180" class="dim-line" marker-start="url(#arrowStart2)" marker-end="url(#arrowEnd2)"/>
+          <text id="tapPitchLabel" x="312" y="170" text-anchor="start" class="dim-text">P 1.5</text>
+        </svg>
+      </div>
+
+      <div class="table-panel">
+        <h2 id="tapHeading">M10 並目 の下穴</h2>
+        <div id="tapContent">
+          <div class="big-readout">
+            <div class="label">推奨下穴径（標準 75%）</div>
+            <div class="value" id="tapDrillValue">-<span class="unit">mm</span></div>
+          </div>
+          <div class="kv">
+            <span class="k"><span class="sym">P</span> ピッチ</span>
+            <span class="v" id="tapPitchValue">-<span class="unit">mm</span></span>
+          </div>
+          <div class="kv">
+            <span class="k">計算式</span>
+            <span class="v" id="tapFormula" style="font-size:13px; font-weight:500;">-</span>
+          </div>
+        </div>
+        <div class="footnote">
+          下穴径 = 呼び径 − ピッチ（かみあい率 約75%、JIS B 0205基準）。材質やタップの種類（ハンド／スパイラル／ポイント／転造）により最適値は変動するため、SUS等の難削材や薄板では現場の標準・タップメーカーの推奨値を優先してください。
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ CATEGORY 3: はめあい公差 ============ -->
+  <div class="panel-view" id="view-tolerance">
+    <p class="sub"><b>穴</b>と<b>軸</b>それぞれの公差域クラスを選ぶと、はめあい(すきま／しめしろ)を計算します。</p>
+
+    <div class="control-row">
+      <label for="tolSize">呼び径 (mm)</label>
+      <select id="tolSize"></select>
+      <label for="tolHole">穴の公差域クラス</label>
+      <select id="tolHole"></select>
+      <label for="tolShaft">軸の公差域クラス</label>
+      <select id="tolShaft"></select>
+    </div>
+
+    <div class="layout">
+      <div class="diagram-panel">
+        <span class="tag">TOLERANCE ZONE</span>
+        <svg viewBox="0 0 420 420" xmlns="http://www.w3.org/2000/svg">
+          <!-- zero line (nominal) -->
+          <line x1="40" y1="210" x2="380" y2="210" stroke="#5a8bb0" stroke-width="1.4" stroke-dasharray="6,4"/>
+          <text x="385" y="214" class="dim-text" font-size="11">0</text>
+          <text x="20" y="214" class="dim-text" font-size="11" text-anchor="end">呼び径</text>
+
+          <!-- hole zone -->
+          <rect id="holeZoneRect" x="150" y="180" width="70" height="30" fill="#ffb454" fill-opacity="0.35" stroke="#ffb454" stroke-width="1.4"/>
+          <text id="holeZoneLabel" x="185" y="172" text-anchor="middle" class="dim-text hi" font-size="12">穴 H7</text>
+
+          <!-- shaft zone -->
+          <rect id="shaftZoneRect" x="230" y="200" width="70" height="20" fill="#4fd1c5" fill-opacity="0.35" stroke="#4fd1c5" stroke-width="1.4"/>
+          <text id="shaftZoneLabel" x="265" y="248" text-anchor="middle" class="dim-text" font-size="12" fill="#4fd1c5">軸 g6</text>
+        </svg>
+      </div>
+
+      <div class="table-panel">
+        <h2 id="tolHeading">φ10 H7 / g6</h2>
+        <div class="big-readout">
+          <div class="label" id="tolFitLabel">はめあいの種類</div>
+          <div class="value" id="tolFitValue" style="font-size:26px;">-</div>
+        </div>
+        <div class="kv">
+          <span class="k">穴 最大 / 最小</span>
+          <span class="v" id="tolHoleMinMax" style="font-size:15px;">-</span>
+        </div>
+        <div class="kv">
+          <span class="k">軸 最大 / 最小</span>
+          <span class="v" id="tolShaftMinMax" style="font-size:15px;">-</span>
+        </div>
+        <div class="kv primary">
+          <span class="k">最大すきま(＋)／しめしろ(－)</span>
+          <span class="v" id="tolMaxGap">-<span class="unit">mm</span></span>
+        </div>
+        <div class="kv primary">
+          <span class="k">最小すきま(＋)／しめしろ(－)</span>
+          <span class="v" id="tolMinGap">-<span class="unit">mm</span></span>
+        </div>
+        <div class="footnote">
+          JIS B 0401抜粋。穴は加工のしやすさから公差域クラスH系を基準にするのが一般的ですが、本ツールでは穴・軸どちらのクラスも自由に組み合わせて計算できます。値はμm(1/1000mm)単位の寸法許容差を呼び径に加算して算出しています。実際の図面指示・検査基準を優先してください。
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ---------- ザグリ寸法早見 ---------- */
+const zaguriData = {
+  "M3":  { ds:3,  dprime:3.4, dk:5.5, D:6.5,  K:3,  H2:3.3 },
+  "M4":  { ds:4,  dprime:4.5, dk:7,   D:8,    K:4,  H2:4.4 },
+  "M5":  { ds:5,  dprime:5.5, dk:8.5, D:9.5,  K:5,  H2:5.4 },
+  "M6":  { ds:6,  dprime:6.6, dk:10,  D:11,   K:6,  H2:6.5 },
+  "M8":  { ds:8,  dprime:9,   dk:13,  D:14,   K:8,  H2:8.6 },
+  "M10": { ds:10, dprime:11,  dk:16,  D:17.5, K:10, H2:10.8 },
+  "M12": { ds:12, dprime:14,  dk:18,  D:20,   K:12, H2:13 },
+  "M14": { ds:14, dprime:16,  dk:21,  D:23,   K:14, H2:15.2 },
+  "M16": { ds:16, dprime:18,  dk:24,  D:26,   K:16, H2:17.5 },
+  "M20": { ds:20, dprime:22,  dk:30,  D:32,   K:20, H2:21.5 },
+  "M24": { ds:24, dprime:26,  dk:36,  D:39,   K:24, H2:25.5 }
+};
+const sizes = Object.keys(zaguriData);
+const zaguriSelect = document.getElementById('zaguriSize');
+sizes.forEach(s => {
+  const opt = document.createElement('option');
+  opt.value = s; opt.textContent = s;
+  zaguriSelect.appendChild(opt);
+});
+zaguriSelect.value = "M4";
+
+function renderZaguri(size){
+  const d = zaguriData[size];
+  document.getElementById('zaguriHeading').textContent = size + " の寸法";
+  document.getElementById('valDs').innerHTML = d.ds + '<span class="unit">mm</span>';
+  document.getElementById('valD').innerHTML = d.D + '<span class="unit">mm</span>';
+  document.getElementById('valH2').innerHTML = d.H2 + '<span class="unit">mm</span>';
+  document.getElementById('valDprime').innerHTML = d.dprime + '<span class="unit">mm</span>';
+  document.getElementById('valDk').innerHTML = d.dk + '<span class="unit">mm</span>';
+  document.getElementById('valK').innerHTML = d.K + '<span class="unit">mm</span>';
+  document.getElementById('dkLabel').textContent = 'dk ' + d.dk;
+  document.getElementById('DLabel').textContent = 'D ' + d.D;
+  document.getElementById('dsLabel').textContent = 'd′ ' + d.dprime;
+  document.getElementById('H2Label').textContent = 'H2 ' + d.H2;
+  document.getElementById('KLabel').textContent = 'K ' + d.K;
+}
+zaguriSelect.addEventListener('change', (e) => renderZaguri(e.target.value));
+renderZaguri("M4");
+
+/* ---------- タップ下穴 ---------- */
+// 標準値(かみあい率75%) JIS B 0205 準拠の実務早見値
+const coarseData = {
+  "M3":  { pitch:0.5,  drill:2.5 },
+  "M4":  { pitch:0.7,  drill:3.3 },
+  "M5":  { pitch:0.8,  drill:4.2 },
+  "M6":  { pitch:1.0,  drill:5.0 },
+  "M8":  { pitch:1.25, drill:6.8 },
+  "M10": { pitch:1.5,  drill:8.5 },
+  "M12": { pitch:1.75, drill:10.2 },
+  "M14": { pitch:2.0,  drill:12.0 },
+  "M16": { pitch:2.0,  drill:14.0 },
+  "M20": { pitch:2.5,  drill:17.5 },
+  "M24": { pitch:3.0,  drill:21.0 }
+};
+const fineData = {
+  "M6":  { pitch:0.75, drill:5.25 },
+  "M8":  { pitch:1.0,  drill:7.0 },
+  "M10": { pitch:1.25, drill:8.8 },
+  "M12": { pitch:1.5,  drill:10.5 },
+  "M14": { pitch:1.5,  drill:12.5 },
+  "M16": { pitch:1.5,  drill:14.5 },
+  "M20": { pitch:1.5,  drill:18.5 },
+  "M24": { pitch:2.0,  drill:22.0 }
+};
+
+const tapSelect = document.getElementById('tapSize');
+sizes.forEach(s => {
+  const opt = document.createElement('option');
+  opt.value = s; opt.textContent = s;
+  tapSelect.appendChild(opt);
+});
+tapSelect.value = "M10";
+let currentPitchType = "coarse";
+
+function buildThreadTeeth(){
+  // draw simple zigzag thread symbols on both hole walls
+  const left = document.getElementById('threadTeethLeft');
+  const right = document.getElementById('threadTeethRight');
+  left.innerHTML = ""; right.innerHTML = "";
+  let y = 70;
+  while(y < 350){
+    const l1 = document.createElementNS("http://www.w3.org/2000/svg","line");
+    l1.setAttribute("x1", 145); l1.setAttribute("y1", y);
+    l1.setAttribute("x2", 158); l1.setAttribute("y2", y+9);
+    l1.setAttribute("class","steel-edge");
+    left.appendChild(l1);
+    const l2 = document.createElementNS("http://www.w3.org/2000/svg","line");
+    l2.setAttribute("x1", 275); l2.setAttribute("y1", y);
+    l2.setAttribute("x2", 262); l2.setAttribute("y2", y+9);
+    l2.setAttribute("class","steel-edge");
+    right.appendChild(l2);
+    y += 18;
+  }
+}
+buildThreadTeeth();
+
+function renderTap(size, pitchType){
+  const table = pitchType === "coarse" ? coarseData : fineData;
+  const label = pitchType === "coarse" ? "並目" : "細目";
+  document.getElementById('tapHeading').textContent = size + " " + label + " の下穴";
+  const entry = table[size];
+  const content = document.getElementById('tapContent');
+
+  if(!entry){
+    content.innerHTML = '<div class="no-fine">' + size + ' には一般的な細目規格がありません。<br>並目をご確認ください。</div>';
+    document.getElementById('tapDrillLabel').textContent = "-";
+    document.getElementById('tapPitchLabel').textContent = "-";
+    return;
+  }
+
+  content.innerHTML =
+    '<div class="big-readout">' +
+      '<div class="label">推奨下穴径（標準 75%）</div>' +
+      '<div class="value">' + entry.drill + '<span class="unit">mm</span></div>' +
+    '</div>' +
+    '<div class="kv">' +
+      '<span class="k"><span class="sym">P</span> ピッチ</span>' +
+      '<span class="v">' + entry.pitch + '<span class="unit">mm</span></span>' +
+    '</div>' +
+    '<div class="kv">' +
+      '<span class="k">計算式</span>' +
+      '<span class="v" style="font-size:13px; font-weight:500;">' + size.replace('M','') + ' − ' + entry.pitch + ' = ' + entry.drill + '</span>' +
+    '</div>';
+
+  document.getElementById('tapDrillLabel').textContent = 'φ' + entry.drill;
+  document.getElementById('tapPitchLabel').textContent = 'P ' + entry.pitch;
+}
+tapSelect.addEventListener('change', (e) => renderTap(e.target.value, currentPitchType));
+document.querySelectorAll('.toggle-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.toggle-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    currentPitchType = btn.dataset.pitch;
+    renderTap(tapSelect.value, currentPitchType);
+  });
+});
+renderTap("M10", "coarse");
+
+/* ---------- はめあい公差 ---------- */
+const holeClasses = {
+  "F7": { label:"F7（すきまばめ・広め）", vals:[
+    {upTo:6,v:[22,10]},{upTo:10,v:[28,13]},{upTo:18,v:[34,16]},
+    {upTo:30,v:[41,20]},{upTo:50,v:[50,25]},{upTo:80,v:[60,30]},{upTo:120,v:[71,36]}
+  ]},
+  "G6": { label:"G6（すきまばめ・精密）", vals:[
+    {upTo:6,v:[12,4]},{upTo:10,v:[14,5]},{upTo:18,v:[17,6]},
+    {upTo:30,v:[20,7]},{upTo:50,v:[25,9]},{upTo:80,v:[29,10]},{upTo:120,v:[34,12]}
+  ]},
+  "G7": { label:"G7（すきまばめ・標準）", vals:[
+    {upTo:6,v:[16,4]},{upTo:10,v:[20,5]},{upTo:18,v:[24,6]},
+    {upTo:30,v:[28,7]},{upTo:50,v:[34,9]},{upTo:80,v:[40,10]},{upTo:120,v:[47,12]}
+  ]},
+  "H6": { label:"H6（すきまばめ・精密基準穴）", vals:[
+    {upTo:6,v:[8,0]},{upTo:10,v:[9,0]},{upTo:18,v:[11,0]},
+    {upTo:30,v:[13,0]},{upTo:50,v:[16,0]},{upTo:80,v:[19,0]},{upTo:120,v:[22,0]}
+  ]},
+  "H7": { label:"H7（最も一般的な基準穴）", vals:[
+    {upTo:6,v:[12,0]},{upTo:10,v:[15,0]},{upTo:18,v:[18,0]},
+    {upTo:30,v:[21,0]},{upTo:50,v:[25,0]},{upTo:80,v:[30,0]},{upTo:120,v:[35,0]}
+  ]},
+  "H8": { label:"H8（基準穴・やや粗い）", vals:[
+    {upTo:6,v:[18,0]},{upTo:10,v:[22,0]},{upTo:18,v:[27,0]},
+    {upTo:30,v:[33,0]},{upTo:50,v:[39,0]},{upTo:80,v:[46,0]},{upTo:120,v:[54,0]}
+  ]},
+  "H9": { label:"H9（基準穴・一般公差）", vals:[
+    {upTo:6,v:[30,0]},{upTo:10,v:[36,0]},{upTo:18,v:[43,0]},
+    {upTo:30,v:[52,0]},{upTo:50,v:[62,0]},{upTo:80,v:[74,0]},{upTo:120,v:[87,0]}
+  ]}
+};
+const shaftClasses = {
+  "g6": { label:"g6（すきまばめ・精密すべり）", vals:[
+    {upTo:6,v:[-4,-12]},{upTo:10,v:[-5,-14]},{upTo:18,v:[-6,-17]},
+    {upTo:30,v:[-7,-20]},{upTo:50,v:[-9,-25]},{upTo:80,v:[-10,-29]},{upTo:120,v:[-12,-34]}
+  ]},
+  "h6": { label:"h6（すきまばめ・標準）", vals:[
+    {upTo:6,v:[0,-8]},{upTo:10,v:[0,-9]},{upTo:18,v:[0,-11]},
+    {upTo:30,v:[0,-13]},{upTo:50,v:[0,-16]},{upTo:80,v:[0,-19]},{upTo:120,v:[0,-22]}
+  ]},
+  "h7": { label:"h7（すきまばめ・一般）", vals:[
+    {upTo:6,v:[0,-12]},{upTo:10,v:[0,-15]},{upTo:18,v:[0,-18]},
+    {upTo:30,v:[0,-21]},{upTo:50,v:[0,-25]},{upTo:80,v:[0,-30]},{upTo:120,v:[0,-35]}
+  ]},
+  "js6": { label:"js6（中間ばめ）", vals:[
+    {upTo:6,v:[4,-4]},{upTo:10,v:[4.5,-4.5]},{upTo:18,v:[5.5,-5.5]},
+    {upTo:30,v:[6.5,-6.5]},{upTo:50,v:[8,-8]},{upTo:80,v:[9.5,-9.5]},{upTo:120,v:[11,-11]}
+  ]},
+  "k6": { label:"k6（中間ばめ・軽い締結）", vals:[
+    {upTo:6,v:[9,1]},{upTo:10,v:[10,1]},{upTo:18,v:[12,1]},
+    {upTo:30,v:[15,2]},{upTo:50,v:[18,2]},{upTo:80,v:[21,2]},{upTo:120,v:[25,3]}
+  ]},
+  "n6": { label:"n6（しまりばめ・軽圧入）", vals:[
+    {upTo:6,v:[16,8]},{upTo:10,v:[19,10]},{upTo:18,v:[23,12]},
+    {upTo:30,v:[28,15]},{upTo:50,v:[33,17]},{upTo:80,v:[39,20]},{upTo:120,v:[45,23]}
+  ]},
+  "p6": { label:"p6（しまりばめ・圧入）", vals:[
+    {upTo:6,v:[20,12]},{upTo:10,v:[24,15]},{upTo:18,v:[29,18]},
+    {upTo:30,v:[35,22]},{upTo:50,v:[42,26]},{upTo:80,v:[51,32]},{upTo:120,v:[59,37]}
+  ]}
+};
+const tolSizes = [4,5,6,8,10,12,14,16,18,20,24,25,30,40,50,63,80,100];
+
+function findBracket(nominal, arr){
+  for(const b of arr){ if(nominal <= b.upTo) return b; }
+  return arr[arr.length-1];
+}
+
+const tolSizeSelect = document.getElementById('tolSize');
+tolSizes.forEach(s => {
+  const opt = document.createElement('option');
+  opt.value = s; opt.textContent = 'φ' + s;
+  tolSizeSelect.appendChild(opt);
+});
+tolSizeSelect.value = "10";
+
+const tolHoleSelect = document.getElementById('tolHole');
+Object.keys(holeClasses).forEach(key => {
+  const opt = document.createElement('option');
+  opt.value = key; opt.textContent = holeClasses[key].label;
+  tolHoleSelect.appendChild(opt);
+});
+tolHoleSelect.value = "H7";
+
+const tolShaftSelect = document.getElementById('tolShaft');
+Object.keys(shaftClasses).forEach(key => {
+  const opt = document.createElement('option');
+  opt.value = key; opt.textContent = shaftClasses[key].label;
+  tolShaftSelect.appendChild(opt);
+});
+tolShaftSelect.value = "g6";
+
+function renderTolerance(){
+  const nominal = parseFloat(tolSizeSelect.value);
+  const holeKey = tolHoleSelect.value;
+  const shaftKey = tolShaftSelect.value;
+  const holeDef = holeClasses[holeKey];
+  const shaftDef = shaftClasses[shaftKey];
+
+  const holeBracket = findBracket(nominal, holeDef.vals);
+  const shaftBracket = findBracket(nominal, shaftDef.vals);
+
+  const holeUpper = holeBracket.v[0] / 1000;
+  const holeLower = holeBracket.v[1] / 1000;
+  const shaftUpper = shaftBracket.v[0] / 1000;
+  const shaftLower = shaftBracket.v[1] / 1000;
+
+  const holeMax = nominal + holeUpper;
+  const holeMin = nominal + holeLower;
+  const shaftMax = nominal + shaftUpper;
+  const shaftMin = nominal + shaftLower;
+
+  const maxGap = holeMax - shaftMin;   // 最大すきま
+  const minGap = holeMin - shaftMax;   // 最小すきま（負ならしめしろ）
+
+  document.getElementById('tolHeading').textContent = 'φ' + nominal + ' ' + holeKey + ' / ' + shaftKey;
+  document.getElementById('holeZoneLabel').textContent = '穴 ' + holeKey;
+  document.getElementById('shaftZoneLabel').textContent = '軸 ' + shaftKey;
+  document.getElementById('tolHoleMinMax').textContent =
+    holeMax.toFixed(3) + ' / ' + holeMin.toFixed(3) + ' mm';
+  document.getElementById('tolShaftMinMax').textContent =
+    shaftMax.toFixed(3) + ' / ' + shaftMin.toFixed(3) + ' mm';
+  document.getElementById('tolMaxGap').innerHTML =
+    (maxGap >= 0 ? '+' : '') + maxGap.toFixed(3) + '<span class="unit">mm</span>';
+  document.getElementById('tolMinGap').innerHTML =
+    (minGap >= 0 ? '+' : '') + minGap.toFixed(3) + '<span class="unit">mm</span>';
+
+  let fitType;
+  if(minGap >= 0){ fitType = "すきまばめ"; }
+  else if(maxGap <= 0){ fitType = "しまりばめ"; }
+  else { fitType = "中間ばめ"; }
+  document.getElementById('tolFitValue').textContent = fitType;
+
+  // update tolerance zone diagram (schematic, px per micron)
+  const scale = 1.6; // px per micron
+  const zeroY = 210;
+  const holeRectY = zeroY - holeUpper*1000*scale;
+  const holeRectH = (holeUpper - holeLower)*1000*scale;
+  document.getElementById('holeZoneRect').setAttribute('y', holeRectY);
+  document.getElementById('holeZoneRect').setAttribute('height', Math.max(holeRectH,2));
+
+  const shaftRectY = zeroY - shaftUpper*1000*scale;
+  const shaftRectH = (shaftUpper - shaftLower)*1000*scale;
+  document.getElementById('shaftZoneRect').setAttribute('y', shaftRectY);
+  document.getElementById('shaftZoneRect').setAttribute('height', Math.max(shaftRectH,2));
+}
+tolSizeSelect.addEventListener('change', renderTolerance);
+tolHoleSelect.addEventListener('change', renderTolerance);
+tolShaftSelect.addEventListener('change', renderTolerance);
+renderTolerance();
+
+/* ---------- カテゴリタブ切り替え ---------- */
+document.querySelectorAll('.cat-tab').forEach(tab => {
+  tab.addEventListener('click', () => {
+    document.querySelectorAll('.cat-tab').forEach(t => t.classList.remove('active'));
+    tab.classList.add('active');
+    document.querySelectorAll('.panel-view').forEach(v => v.classList.remove('active'));
+    document.getElementById('view-' + tab.dataset.cat).classList.add('active');
+  });
+});
+</script>
+</body>
+</html>

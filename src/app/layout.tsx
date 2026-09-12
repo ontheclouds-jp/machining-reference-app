@@ -16,13 +16,13 @@ const jetBrainsMono = JetBrains_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "機械加工 寸法早見",
+  title: "穴加工わかる君",
   description: "ザグリ寸法・タップ下穴を現場ですぐ調べるための早見PWAアプリ",
   manifest: "/manifest.json",
   appleWebApp: {
     capable: true,
     statusBarStyle: "black-translucent",
-    title: "寸法早見",
+    title: "穴加工わかる君",
   },
   icons: {
     icon: [

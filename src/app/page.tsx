@@ -15,7 +15,7 @@ export default function Home() {
       <div className="header-row">
         <div>
           <p className="eyebrow">Machining Reference / 加工現場向け参考値</p>
-          <h1>機械加工 寸法早見</h1>
+          <h1>穴加工わかる君</h1>
         </div>
         <HelpModal />
       </div>

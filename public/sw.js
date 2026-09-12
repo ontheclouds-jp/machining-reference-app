@@ -1,4 +1,4 @@
-const CACHE_NAME = "machining-reference-v2.0.0";
+const CACHE_NAME = "machining-reference-v2.0.1";
 const APP_SHELL = ["/", "/manifest.json"];
 
 self.addEventListener("install", (event) => {

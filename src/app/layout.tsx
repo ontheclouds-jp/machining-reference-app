@@ -17,7 +17,7 @@ const jetBrainsMono = JetBrains_Mono({
 
 export const metadata: Metadata = {
   title: "機械加工 寸法早見",
-  description: "ザグリ寸法・タップ下穴・はめあい公差を現場ですぐ調べるための早見PWAアプリ",
+  description: "ザグリ寸法・タップ下穴を現場ですぐ調べるための早見PWAアプリ",
   manifest: "/manifest.json",
   appleWebApp: {
     capable: true,

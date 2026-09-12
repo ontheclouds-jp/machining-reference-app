@@ -5,7 +5,6 @@ import CategoryTabs from "@/components/CategoryTabs";
 import HelpModal from "@/components/HelpModal";
 import ZaguriPanel from "@/components/zaguri/ZaguriPanel";
 import TapPanel from "@/components/tap/TapPanel";
-import TolerancePanel from "@/components/tolerance/TolerancePanel";
 import { CategoryKey } from "@/types";
 
 export default function Home() {
@@ -28,9 +27,6 @@ export default function Home() {
       </div>
       <div className={`panel-view${category === "tap" ? " active" : ""}`}>
         <TapPanel />
-      </div>
-      <div className={`panel-view${category === "tolerance" ? " active" : ""}`}>
-        <TolerancePanel />
       </div>
     </div>
   );

@@ -1,7 +1,7 @@
 {
   "name": "機械加工 寸法早見",
   "short_name": "寸法早見",
-  "description": "ザグリ寸法・タップ下穴・はめあい公差を現場ですぐ調べるための早見アプリ",
+  "description": "ザグリ寸法・タップ下穴を現場ですぐ調べるための早見アプリ",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",

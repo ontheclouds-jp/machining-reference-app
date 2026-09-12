@@ -18,17 +18,4 @@ export interface TapEntry {
   drill: number;
 }
 
-export interface ToleranceBracket {
-  upTo: number;
-  /** [upper, lower] allowance in micrometers (µm) */
-  v: [number, number];
-}
-
-export interface ToleranceClassDef {
-  label: string;
-  vals: ToleranceBracket[];
-}
-
-export type FitType = "すきまばめ" | "中間ばめ" | "しまりばめ";
-
-export type CategoryKey = "zaguri" | "tap" | "tolerance";
+export type CategoryKey = "zaguri" | "tap";

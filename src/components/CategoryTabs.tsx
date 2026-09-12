@@ -5,7 +5,6 @@ import { CategoryKey } from "@/types";
 const TABS: { key: CategoryKey; label: string }[] = [
   { key: "zaguri", label: "ザグリ寸法早見" },
   { key: "tap", label: "タップ下穴（並目・細目）" },
-  { key: "tolerance", label: "はめあい公差" },
 ];
 
 interface Props {
